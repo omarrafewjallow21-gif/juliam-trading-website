@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>JULIAM TRADING | Shipment Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status"></div>
+
+  <main id="loginScreen" class="login-wrap">
+    <section class="login-card">
+      <div class="brand-mark">J<span>J</span></div>
+      <p class="eyebrow">SHIPMENT MANAGEMENT SYSTEM</p>
+      <h1>JULIAM <span>TRADING</span></h1>
+      <p class="muted">Secure branch management portal</p>
+      <form id="loginForm">
+        <label>Email address<input id="loginEmail" type="email" autocomplete="username" required></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <button class="btn primary full" type="submit">Sign in</button>
+        <button class="text-btn full" type="button" id="forgotPassword">Forgot password?</button>
+      </form>
+      <p class="small muted">Authorised JULIAM TRADING staff only.</p>
+    </section>
+  </main>
+
+  <div id="appShell" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark small-mark">J<span>J</span></div>
+        <div><strong>JULIAM</strong><small>TRADING</small></div>
+      </div>
+      <div class="user-mini">
+        <div class="avatar" id="userInitials">JT</div>
+        <div><strong id="userName">Manager</strong><small id="userRole">Manager</small></div>
+      </div>
+      <nav id="mainNav">
+        <button class="nav-link active" data-page="dashboard">▦ <span>Dashboard</span></button>
+        <button class="nav-link" data-page="shipments">▣ <span>Shipments</span></button>
+        <button class="nav-link" data-page="customers">♙ <span>Customers</span></button>
+        <button class="nav-link" data-page="tariffs">◇ <span>Tariff management</span></button>
+        <button class="nav-link" data-page="commissions">₲ <span>Commission reports</span></button>
+        <button class="nav-link" data-page="reports">▤ <span>Financial reports</span></button>
+        <button class="nav-link" data-page="manifest">☷ <span>Shipment manifest</span></button>
+        <button class="nav-link" data-page="activity">◷ <span>Activity log</span></button>
+        <button class="nav-link" data-page="backup">⇧ <span>Backup & restore</span></button>
+      </nav>
+      <button id="logoutBtn" class="btn outline full logout">Sign out</button>
+    </aside>
+
+    <section class="main-area">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div><span class="eyebrow">JULIAM TRADING</span><h2 id="pageTitle">Dashboard</h2></div>
+        <div class="top-actions"><span class="status-dot"></span><span id="connectionLabel">Connected</span></div>
+      </header>
+      <div id="pageContent" class="content"></div>
+      <footer>© <span id="year"></span> JULIAM TRADING · Internal management system</footer>
+    </section>
+  </div>
+
+  <dialog id="shipmentDialog" class="modal">
+    <form id="shipmentForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">NEW RECORD</p><h3>Register shipment</h3></div><button type="button" class="icon-btn" data-close="shipmentDialog">✕</button></div>
+      <div class="form-grid">
+        <label>Existing customer<select id="shipmentCustomer" required></select></label>
+        <label>Destination country<input id="destinationCountry" required placeholder="e.g. Senegal"></label>
+        <label>Shipping region<select id="shipmentRegion" required></select></label>
+        <label>Weight (kg)<input id="shipmentWeight" type="number" min="0.01" step="0.01" required></label>
+        <label>Shipping amount (GMD)<input id="shipmentAmount" type="number" min="0.01" step="0.01" required></label>
+        <label>Payment method<select id="paymentMethod"><option value="">Select method</option><option>Cash</option><option>Bank transfer</option><option>Mobile money</option><option>Other</option></select></label>
+        <label>Tariff used (optional)<select id="shipmentTariff"><option value="">Not selected</option></select></label>
+        <label>DHL tracking number (optional)<input id="shipmentTracking" placeholder="Enter when available"></label>
+        <label class="span-2">Notes<textarea id="shipmentNotes" rows="2"></textarea></label>
+      </div>
+      <label class="confirm-check"><input id="paymentConfirmed" type="checkbox" required> I confirm that the customer has paid the full shipment amount.</label>
+      <p class="hint">New shipments are saved as PAID. A 15% commission record is generated automatically by the database.</p>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="shipmentDialog">Cancel</button><button class="btn primary" type="submit">Save paid shipment</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="customerDialog" class="modal">
+    <form id="customerForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">CUSTOMER RECORD</p><h3>Add customer</h3></div><button type="button" class="icon-btn" data-close="customerDialog">✕</button></div>
+      <div class="form-grid">
+        <label>Full name<input id="customerName" required></label>
+        <label>Phone number<input id="customerPhone" required></label>
+        <label>Email<input id="customerEmail" type="email"></label>
+        <label>Address<input id="customerAddress"></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="customerDialog">Cancel</button><button class="btn primary" type="submit">Save customer</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="regionDialog" class="modal">
+    <form id="regionForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">TARIFF SETTINGS</p><h3>Add shipping region</h3></div><button type="button" class="icon-btn" data-close="regionDialog">✕</button></div>
+      <label>Region name<input id="regionName" required placeholder="e.g. West Africa"></label>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="regionDialog">Cancel</button><button class="btn primary" type="submit">Save region</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="weightDialog" class="modal">
+    <form id="weightForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">TARIFF SETTINGS</p><h3>Add weight band</h3></div><button type="button" class="icon-btn" data-close="weightDialog">✕</button></div>
+      <div class="form-grid">
+        <label>Label<input id="weightLabel" required placeholder="e.g. 0.5–1 kg"></label>
+        <label>Minimum kg<input id="weightMin" type="number" min="0" step="0.01" required></label>
+        <label>Maximum kg<input id="weightMax" type="number" min="0.01" step="0.01" required></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="weightDialog">Cancel</button><button class="btn primary" type="submit">Save weight band</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="tariffDialog" class="modal">
+    <form id="tariffForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">TARIFF SETTINGS</p><h3>Set shipping price</h3></div><button type="button" class="icon-btn" data-close="tariffDialog">✕</button></div>
+      <div class="form-grid">
+        <label>Region<select id="tariffRegion" required></select></label>
+        <label>Weight band<select id="tariffWeight" required></select></label>
+        <label>Price (GMD)<input id="tariffPrice" type="number" min="0" step="0.01" required></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="tariffDialog">Cancel</button><button class="btn primary" type="submit">Save tariff</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="statusDialog" class="modal">
+    <form id="statusForm" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow">SHIPMENT UPDATE</p><h3>Update shipment</h3></div><button type="button" class="icon-btn" data-close="statusDialog">✕</button></div>
+      <input type="hidden" id="statusShipmentId">
+      <label>Shipment status<select id="statusValue"><option>Registered</option><option>Dispatched</option><option>In Transit</option><option>Delivered</option></select></label>
+      <label>DHL tracking number<input id="statusTracking"></label>
+      <div class="modal-actions"><button type="button" class="btn outline" data-close="statusDialog">Cancel</button><button class="btn primary" type="submit">Update shipment</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
